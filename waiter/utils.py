@@ -5,7 +5,7 @@ from flask import Flask
 from waiter.config import ApplicationConfig
 
 
-def allowed_image(filename):
+def allowed_image(filename: str, app: Flask):
 
     # We only want files with a . in the filename
     if not "." in filename:

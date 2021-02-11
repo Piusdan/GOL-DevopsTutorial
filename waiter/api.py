@@ -1,32 +1,17 @@
 import os
 import traceback
 
-from azure.storage.blob import BlobServiceClient
-from azure.cosmos import CosmosClient, DatabaseProxy
 from flask import jsonify, request
 from flask.views import MethodView
 from werkzeug.exceptions import HTTPException
 from werkzeug.utils import secure_filename
 
+from waiter.azure_sdk import FlaskBlobServiceClient, FlaskCosmosClient
 from waiter.utils import create_app
 from waiter.api_schemas import APIStatus, APIError, APISchema, PersistImageRequest, ImageFile
 from waiter.config import ApplicationConfig
 from waiter.image_persistor import ImagePersistor
 from waiter.image_retriever import ImageRetriver
-
-
-class FlaskBlobServiceClient(BlobServiceClient):
-    @staticmethod
-    def init_app(app) -> BlobServiceClient:
-        blob_service = BlobServiceClient(account_url=app.config["BLOB_STORAGE_ENDPOINT"], credential=app.config["BLOB_STORAGE_KEY"])
-        return blob_service
-
-class FlaskCosmosClient(CosmosClient):
-    @staticmethod
-    def init_app(app) -> DatabaseProxy:
-        cosmos =CosmosClient(url=app.config["COSMOS_ACCOUNT_ENDPOINT"], credential=app.config["COSMOS_ACCOUNT_KEY"])
-        db = cosmos.create_database_if_not_exists(id=app.config["DATABASE_NAME"])
-        return db
 
 
 class APIException(HTTPException):
@@ -82,15 +67,15 @@ class ImageAPI(MethodView):
                 status=APIStatus.SUCCESS,
                 data=images
             )
-        except Exception as exc: raise
-            # error = APIError(
-            #     message="Failed to fetch image",
-            #     description=str(exc)
-            # )
-            # response = APISchema(
-            #     status=APIStatus.FAILED,
-            #     errors=[error]
-            # )
+        except Exception as exc:
+            error = APIError(
+                message="Failed to fetch image",
+                description=str(exc)
+            )
+            response = APISchema(
+                status=APIStatus.FAILED,
+                errors=[error]
+            )
 
         return jsonify(response.to_json()), response.status_code
 
@@ -118,7 +103,7 @@ class ImageAPI(MethodView):
         image_persistor = ImagePersistor(blob_service=blob_service, db=cosmos)
         try:
             image_persistor.persist_image(persist_req)
-            response = APISchema(status=APIStatus.SUCCESS)
+            response = APISchema(status=APIStatus.SUCCESS, status_code=201)
         except Exception as exc: raise
 
             # error = APIError(
