@@ -1,6 +1,7 @@
 import enum
 import uuid
 from dataclasses import dataclass, asdict, field
+import datetime
 
 
 class APIStatus(enum.Enum):
@@ -12,31 +13,38 @@ class APIStatus(enum.Enum):
 class BaseSchema():
     def to_json(self): return asdict(self)
 
+
 @dataclass
 class ImageFile(BaseSchema):
     local: bool
     filename: str
     path: str
     id: uuid.UUID = field(default_factory=uuid.uuid4)
+    created_at: datetime.datetime = field(default_factory=datetime.datetime.now)
 
     def to_json(self):
         json_obj = asdict(self)
-        json_obj["local"] = str(json_obj["local"])
-        json_obj["id"] = str(json_obj["id"])
+        json_obj["local"] = str(self.local)
+        json_obj["id"] = str(self.id)
+        json_obj["created_at"] = str(self.created_at)
         return json_obj
-
 
 @dataclass
 class ImageProperties(BaseSchema):
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     attributes: dict = field(default_factory=dict)
     image: ImageFile = None
+    created_at: datetime.datetime = field(default_factory=datetime.datetime.now)
 
     def to_json(self):
         json_obj = asdict(self)
-        json_obj["id"] = str(json_obj["id"])
-        if self.image is not None:
-            json_obj["image"] = self.image.to_json()
+        json_obj["id"] = str(self.id)
+        json_obj["created_at"] = str(self.created_at)
+        if self.image is not None or type(self.image):
+            try:
+                json_obj["image"] = self.image.to_json()
+            except AttributeError as exc:
+                pass
         return json_obj
 
 @dataclass

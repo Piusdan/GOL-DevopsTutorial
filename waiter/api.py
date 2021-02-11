@@ -76,20 +76,21 @@ class ImageAPI(MethodView):
     def get(self):
         # query image properties from cosmos
         try:
-            images = ImageRetriver.get_image()
+            images = ImageRetriver.get_image(db=cosmos)
+            app.logger.info("Found %d images" % len(images))
             response = APISchema(
                 status=APIStatus.SUCCESS,
                 data=images
             )
-        except Exception as exc:
-            error = APIError(
-                message="Failed to fetch image",
-                description=str(exc)
-            )
-            response = APISchema(
-                status=APIStatus.FAILED,
-                errors=[error]
-            )
+        except Exception as exc: raise
+            # error = APIError(
+            #     message="Failed to fetch image",
+            #     description=str(exc)
+            # )
+            # response = APISchema(
+            #     status=APIStatus.FAILED,
+            #     errors=[error]
+            # )
 
         return jsonify(response.to_json()), response.status_code
 
