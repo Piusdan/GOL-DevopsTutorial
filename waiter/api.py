@@ -104,14 +104,14 @@ class ImageAPI(MethodView):
         try:
             image_persistor.persist_image(persist_req)
             response = APISchema(status=APIStatus.SUCCESS, status_code=201)
-        except Exception as exc: raise
+        except Exception as exc:
 
-            # error = APIError(
-            #     status_code=500,
-            #     message="Failed to save image",
-            #     description=str(exc)
-            # )
-            # response = APISchema(status=APIStatus.FAILED, errors=[error], status_code=500)
+            error = APIError(
+                status_code=500,
+                message="Failed to save image",
+                description=str(exc)
+            )
+            response = APISchema(status=APIStatus.FAILED, errors=[error], status_code=500)
 
         return jsonify(response.to_json()), response.status_code
 
